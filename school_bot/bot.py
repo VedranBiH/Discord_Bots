@@ -80,19 +80,37 @@ class ResponseCommands(commands.Cog):
 
     @commands.command(name='list')
     async def list_ids(self, ctx):
-        """List all response IDs"""
+        """List all response IDs and their contents"""
         try:
             if not self.bot.responses:
                 await ctx.send('No responses have been submitted yet.')
                 return
             
-            ids_list = '\n'.join(self.bot.responses.keys())
-            await ctx.send(f'Available response IDs:\n```{ids_list}```')
-            logger.info(f'IDs listed by {ctx.author.name}')
+            # Create an embed for each response ID
+            for response_id, responses in self.bot.responses.items():
+                embed = discord.Embed(
+                    title=f'Responses for ID: {response_id}',
+                    color=discord.Color.blue(),
+                    timestamp=datetime.now()
+                )
+                
+                if not responses:
+                    embed.description = "No responses for this ID yet."
+                else:
+                    for user_id, data in responses.items():
+                        embed.add_field(
+                            name=f"Response from {data['author']}",
+                            value=f"{data['response']}\n*Submitted at: {data['timestamp']}*",
+                            inline=False
+                        )
+                
+                await ctx.send(embed=embed)
+            
+            logger.info(f'All responses listed by {ctx.author.name}')
             
         except Exception as e:
-            logger.error(f'Error listing IDs: {str(e)}')
-            await ctx.send('There was an error listing the IDs. Please try again.')
+            logger.error(f'Error listing responses: {str(e)}')
+            await ctx.send('There was an error listing the responses. Please try again.')
 
     @commands.command(name='clear')
     @commands.has_permissions(administrator=True)
